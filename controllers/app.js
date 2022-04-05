@@ -144,12 +144,30 @@ router.post('/users',upload.single('image'),async(req,res,next)=>{
 router.get('/users/:id',async(req,res)=>{
 
     const {id} = req.params
-      /*
-     res.end(`<img src="data:image/${user.photo.contentType};base64,
-        ${user.photo.data.toString('base64')}">`)
-    */
+      
+     
+    
     const foundUser = User.findById(id).then(function(user){
         return res.json({success : true,user:user})
+    }).catch(function(e){
+        return res.status(404).json({"success": false,
+        "message": "The user with the requested identifier does not exist",
+        "fails": {
+          "user_id" : e.message
+        }})
+    })
+    
+})
+
+router.get('/rusers/:id',async(req,res)=>{
+
+    const {id} = req.params
+      
+     
+    
+    const foundUser = User.findById(id).then(function(user){
+        return res.end(`<img src="data:image/${user.photo.contentType};base64,
+        ${user.photo.data.toString('base64')}">`)
     }).catch(function(e){
         return res.status(404).json({"success": false,
         "message": "The user with the requested identifier does not exist",
