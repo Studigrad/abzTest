@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Users</title>
+</head>
+  
+<body>
+    <h1>USERS</h1>
+    <hr>
+    <div>
+        <form action="/" method="POST" enctype="multipart/form-data">
+            <div>
+                <label for="name">Name</label>
+                <input type="text" id="name" placeholder="Name" 
+                       value="" name="name" required>
+            </div>
+            <div>
+                <label for="email">Email</label>
+                <input type="text" id="email" placeholder="Email" 
+                       value="" name="email" required>
+            </div>
+            <div>
+                <label for="name">Phone</label>
+                <input type="text" id="phone" placeholder="Phone" 
+                       value="" name="phone" required>
+            </div>
+            <div>
+                <label for="position_id">Position id</label>
+                <input type="text" id="position_id" placeholder="Position id" 
+                       value="" name="position_id" required>
+            </div>
+            <div>
+                <label for="desc">Image Description</label>
+                <textarea id="desc" name="desc" value="" rows="2" 
+                          placeholder="Description" required>
+                </textarea>
+            </div>
+            <div>
+                <label for="image">Upload Image</label>
+                <input type="file" id="image" 
+                       name="image" value="" required>
+            </div>
+            <div>
+                <button type="submit">Submit</button>
+            </div>
+
+           
+            
+        </form>
+       
+        <% if(response.prev) { %> 
+            <a href=<%= response.links.prev_url %> >Prev Page</a>
+            <%  } %> 
+            
+        <a href=<%= response.links.next_url %> >Next Page</a>
+        
+        <% for(let user of response.users){ %>
+            <% if(user.photo.data){ %> 
+            <img src="data:image/<%= user.photo.contentType %>;base64,
+            <%=user.photo.data.toString('base64')%>">
+            <% } else{%>
+                <img src=<%= user.photo %>  alt="">
+                <% } %>  
+       <% } %> 
+    </div>
+  
+    <hr>
+  
+   
+</body>
+  
+</html>

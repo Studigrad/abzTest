@@ -7,8 +7,12 @@ const mongoose = require('mongoose');
 const User = require('../models/users')
 const fs = require('fs');
 const bodyParser = require('body-parser');
+const tinity = require('./tinify')
 let multer = require('multer');
 router = express();
+
+
+
 const port = process.env.PORT ?? 8050
 
 router.set('view engine', 'ejs');
@@ -23,7 +27,7 @@ router.use(session({ secret: 'secret' }))
 // set up multer for storing uploaded files
 var storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, './uploads')
+        cb(null, '../uploads')
     },
     filename: (req, file, cb) => {
         cb(null, file.fieldname + '-' + Date.now())
@@ -35,17 +39,16 @@ var upload = multer({ storage: storage });
 
 
 function MakePage(foundUser,page){
-
     const array = [...foundUser]
     let result = [];
-    for (let i = page; i > 0; i--) {
-        result.push(array.splice(0, Math.ceil(array.length / i)));
-    }
+        while (array.length) {
+            result.push(array.splice(0, page));
+        }        
     return result;
 }
 
 router.get('/',(req,res)=>{
-    res.end('<h1>Hello World</h1>')
+    res.render('index')
 })
 
 router.get('/token',(req,res)=>{
@@ -75,36 +78,47 @@ router.get('/users',async(req,res)=>{
     let next = 2
 
     const result = MakePage(foundUser,count)
+
     if(page>result.length){
         return res.status(404).json({
             error:'You are out of pages'
         })
     }
+
     if(page>1){
         prev = parseInt(page)-1
         next = parseInt(page)+1
-    }
-    else{ prev = null }
-    
-     res.json({
-    "success": true,
-    "page": page,
-    "total_pages": result.length,
-    "total_users": foundUser.length,
-    "count": count,
-    "links": 
-    {
-        "next_url": link+`${next}&offset=${offset}&count=${count}`,
-        "prev_url": link+`${prev}&offset=${offset}&count=${count}`
-    },
-    "user": result[page-1]
-    })
+    } else{ prev = null }
+
+    let response = {
+        success: true,
+        page: page,
+        total_pages: result.length,
+        total_users: foundUser.length,
+        count: count,
+        links: 
+        {
+            next_url: link+`${next}&offset=${offset}&count=${count}`,
+            prev_url: link+`${prev}&offset=${offset}&count=${count}`
+        },
+        users: result[page-1],
+        prev:prev
+        }
+
+        if(req.header('Accept').includes('application/json')){
+            res.json(response)
+        } else{
+            res.render('index',{response})
+        }
 
 })
 
 router.post('/users',upload.single('image'),async(req,res,next)=>{   
+
     const token = req.headers.token || req.session.id
-   const {name,email,phone,position_id,photo} = req.body
+    const {name,email,phone,position_id,photo} = req.body
+    const buf =  await tinity(photo)
+    
     if(token==req.session.id){        
         const newUser = new User({
             name,
@@ -113,8 +127,8 @@ router.post('/users',upload.single('image'),async(req,res,next)=>{
             position_id,
             photo:
             {
-                data: fs.readFileSync(path.join(__dirname ,'..','uploads' , photo)),
-                contentType: 'image/png'
+                data: fs.readFileSync(path.join(__dirname,'..','uploads',buf)),
+                contentType: 'image/jpeg'
             }
         })
 
@@ -139,16 +153,20 @@ router.post('/users',upload.single('image'),async(req,res,next)=>{
             "message": "The token expired."
         })
     }
+
 })
 
 router.get('/users/:id',async(req,res)=>{
 
     const {id} = req.params
       
-     
-    
     const foundUser = User.findById(id).then(function(user){
-        return res.json({success : true,user:user})
+        if(req.header('Accept').includes('application/json')){
+            return res.json({success : true,user:user})
+        } else{
+            return res.render('user',{user})
+        }
+        
     }).catch(function(e){
         return res.status(404).json({"success": false,
         "message": "The user with the requested identifier does not exist",
@@ -162,9 +180,7 @@ router.get('/users/:id',async(req,res)=>{
 router.get('/rusers/:id',async(req,res)=>{
 
     const {id} = req.params
-      
-     
-    
+
     const foundUser = User.findById(id).then(function(user){
         return res.end(`<img src="data:image/${user.photo.contentType};base64,
         ${user.photo.data.toString('base64')}">`)
