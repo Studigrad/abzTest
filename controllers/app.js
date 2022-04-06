@@ -3,10 +3,8 @@ const ejsMate = require('ejs-mate');
 const methodOverride = require('method-override');
 const session = require('express-session'); 
 const path = require('path');
-const mongoose = require('mongoose');
 const User = require('../models/users')
 const fs = require('fs');
-const bodyParser = require('body-parser');
 const tinity = require('./tinify')
 let multer = require('multer');
 router = express();
@@ -33,7 +31,6 @@ var storage = multer.diskStorage({
         cb(null, file.fieldname + '-' + Date.now())
     }
 });
-  
 var upload = multer({ storage: storage });
 
 
@@ -67,7 +64,7 @@ router.get('/token',(req,res)=>{
 })
 
 router.get('/users',async(req,res)=>{
-    let link = `http://localhost:${port}/users?page=`
+    let link = process.env.URL || `http://localhost:${port}/users?page=`
 
     const foundUser = await User.find();
     
@@ -176,7 +173,7 @@ router.get('/users/:id',async(req,res)=>{
     })
     
 })
-
+/*
 router.get('/rusers/:id',async(req,res)=>{
 
     const {id} = req.params
@@ -193,7 +190,7 @@ router.get('/rusers/:id',async(req,res)=>{
     })
     
 })
-
+*/
 router.get('/positions',async(req,res)=>{
     const {id} = req.body
     const foundUser = await User.findOne()
