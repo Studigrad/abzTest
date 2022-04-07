@@ -7,11 +7,12 @@ const User = require('../models/users')
 const fs = require('fs');
 const tinity = require('./tinify')
 let multer = require('multer');
-router = express();
-let Enum = require('./Enum')
+
+
+//const client = redis.createClient()
 
 const port = process.env.PORT ?? 8050
-
+router = express();
 router.set('view engine', 'ejs');
 router.set('views', path.join(__dirname,'..','views'))
 router.use(express.urlencoded({ extended: true }));
@@ -43,7 +44,9 @@ function MakePage(foundUser,page){
 }
 
 router.get('/',(req,res)=>{
-    res.end('<h1>Hello World</h1>')
+    console.log(req.session)
+  res.sendStatus(200)
+    //res.end('<h1>Hello World</h1>')
 })
 
 router.get('/token',(req,res)=>{
@@ -148,7 +151,7 @@ router.post('/users',upload.single('photo'),async(req,res,next)=>{
             }else{
                 return res.status(400).json({
                     "success": false,
-                    "message": "User with this phone or email already exist"
+                    "message": "User with this phone ,name or email already exist"
                   })
             }
             
@@ -188,6 +191,11 @@ router.get('/users/:id',async(req,res)=>{
         }})
     })
     
+})
+router.post('/users/:id',async(req,res)=>{
+    const {id} = req.params
+    const result = await User.findByIdAndDelete(id)
+    res.redirect('/users')
 })
 /*
 router.get('/rusers/:id',async(req,res)=>{

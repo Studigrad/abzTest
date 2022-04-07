@@ -33,6 +33,7 @@ const UserSchema = Schema({
         type:Number,
         required:[true,'position_id is required'],
         min:[1,'Minimum 1'],
+        validate: [Number, 'position id should be a number '],
     },
     photo:{
         data: Buffer,

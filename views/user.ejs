@@ -43,9 +43,12 @@
                 <input type="text" id="position_id" placeholder=<%= user.position_id %>  
                        value="" name="position_id" required>
             </div>
+            <form class="card mx-auto mt-3" action="/users/<%= user._id %>" method="POST">
+                <button class="btn btn-danger">DELETE</button>
+              </form>
             </div>
           </div>
-
+         
             
            
            
