@@ -45,7 +45,7 @@ function MakePage(foundUser,page){
 
 router.get('/',(req,res)=>{
     console.log(req.session)
-  res.sendStatus(200)
+     res.redirect('/users')
     //res.end('<h1>Hello World</h1>')
 })
 
