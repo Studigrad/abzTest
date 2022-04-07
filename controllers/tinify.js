@@ -1,9 +1,12 @@
 const tinify = require("tinify");
+let multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 tinify.key = "r2ZvMMvvRdGPPLrhkHKp2Mvx0SbqSszt";
 
+
  async function tinity(name) {
+     
     const newName = 'opt-'+name
     const file = path.join(__dirname,'..','uploads',name)
     const newFile = path.join(__dirname,'..','uploads',newName)

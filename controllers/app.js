@@ -8,8 +8,7 @@ const fs = require('fs');
 const tinity = require('./tinify')
 let multer = require('multer');
 router = express();
-
-
+let Enum = require('./Enum')
 
 const port = process.env.PORT ?? 8050
 
@@ -25,14 +24,13 @@ router.use(session({ secret: 'secret' }))
 // set up multer for storing uploaded files
 var storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, '../uploads')
+        cb(null, 'uploads')
     },
     filename: (req, file, cb) => {
-        cb(null, file.fieldname + '-' + Date.now())
+        cb(null, file.originalname)
     }
 });
 var upload = multer({ storage: storage });
-
 
 
 function MakePage(foundUser,page){
@@ -45,7 +43,7 @@ function MakePage(foundUser,page){
 }
 
 router.get('/',(req,res)=>{
-    res.render('index')
+    res.end('<h1>Hello World</h1>')
 })
 
 router.get('/token',(req,res)=>{
@@ -110,11 +108,11 @@ router.get('/users',async(req,res)=>{
 
 })
 
-router.post('/users',upload.single('image'),async(req,res,next)=>{   
+router.post('/users',upload.single('photo'),async(req,res,next)=>{   
 
     const token = req.headers.token || req.session.id
     const {name,email,phone,position_id,photo} = req.body
-    const buf =  await tinity(photo)
+    const buf = await tinity(req.file.filename)
     
     if(token==req.session.id){        
         const newUser = new User({
@@ -192,8 +190,36 @@ router.get('/rusers/:id',async(req,res)=>{
 })
 */
 router.get('/positions',async(req,res)=>{
-    const {id} = req.body
-    const foundUser = await User.findOne()
+    const positions = { 1: {id:1,name:'Security'}, 2: {id:2,name:'Designer'}, 3: {id:3,name:'Content manager'}, 4: {id:4,name:'Lawyer'} }
+    const foundUser = await User.find()
+    let array = []
+    let result = []
+    for(let position of foundUser){
+        array.push(position.position_id)
+    }
+    let uniqueArray = [...new Set(array)]
+    for(let position of uniqueArray){
+        try{       
+            if(position == positions[position].id){
+                result.push({
+                    id:positions[position].id,
+                    name:positions[position].name
+                })
+            }
+        }catch(e){ }     
+    }
+    if(result){
+        return res.json({
+            "success" : true,
+            "positions" : result
+          })
+    }else{
+        return res.json({
+            "success" : false,
+            "positions" : 'Positions not found'
+          })
+    }
+    
 })
 
 

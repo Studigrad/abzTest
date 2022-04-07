@@ -13,6 +13,44 @@
     <h1>USERS</h1>
     <hr>
     <div>
+        <h1>Make New User</h1>
+    <hr>
+    <div >
+        <form action="/users" method="POST" enctype="multipart/form-data">
+            
+            <div class="m-2">
+                <label for="name">Name</label>
+                <input type="text" id="name" placeholder
+                        name="name" required>
+            </div>
+            <div class="m-2">
+                <label for="email">Email</label>
+                <input type="text" id="email" placeholder 
+                        name="email" required>
+            </div>
+            <div class="m-2">
+                <label for="name">Phone</label>
+                <input type="text" id="phone" placeholder
+                        name="phone" required>
+            </div>
+            <div class="m-2">
+                <label for="position_id">Position id</label>
+                <input type="text" id="position_id" placeholder
+                        name="position_id" required>
+            </div>
+           
+            <div class="m-2">
+                <label for="photo">Upload Image</label>
+                <input type="file" id="photo" 
+                       name="photo" value="" required>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-secondary">Submit</button>
+            </div>
+        </form>
+    </div>
+
+    <hr>
         <% if(response.prev) { %> 
             <a href=<%= response.links.prev_url %> class="btn btn-primary">Prev Page</a>
             <%  } %> 
@@ -27,8 +65,8 @@
                     <img src=<%= user.photo %>  alt="">
                     <% } %>  
             <div class="card-body">
-              <h5 class="card-title">Card title</h5>
-              <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+              <h5 class="card-title">Info</h5>
+              
               <div>
                 <label for="name">Name</label>
                 <input type="text" id="name" placeholder=<%= user.name %> 
