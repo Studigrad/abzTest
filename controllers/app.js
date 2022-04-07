@@ -112,7 +112,15 @@ router.post('/users',upload.single('photo'),async(req,res,next)=>{
 
     const token = req.headers.token || req.session.id
     const {name,email,phone,position_id,photo} = req.body
-    const buf = await tinity(req.file.filename)
+    let buf = ''
+    try{
+         buf = await tinity(req.file.filename)
+    }catch(e){
+        return res.status(400).json({
+            "success": false,
+            "message": "Photo is required"
+          })
+    }
     
     if(token==req.session.id){        
         const newUser = new User({
@@ -130,10 +138,20 @@ router.post('/users',upload.single('photo'),async(req,res,next)=>{
         try{
             const result = await newUser.save()
         }catch(e){
-            return res.status(400).json({
-                "success": false,
-                "message": "User with this phone or email already exist"
-              })
+            
+            if(e.code!=11000){
+                
+                return res.status(400).json({
+                    "success": false,
+                    "message": e.message
+                  })
+            }else{
+                return res.status(400).json({
+                    "success": false,
+                    "message": "User with this phone or email already exist"
+                  })
+            }
+            
         }
         
         return   res.json({
@@ -143,7 +161,7 @@ router.post('/users',upload.single('photo'),async(req,res,next)=>{
         })
         
     }else{
-        return    res.status(400).json({
+        return  res.status(400).json({
             "success": false,
             "message": "The token expired."
         })
