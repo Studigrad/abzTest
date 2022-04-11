@@ -4,6 +4,7 @@ const methodOverride = require('method-override');
 const session = require('express-session'); 
 const path = require('path');
 const User = require('../models/users')
+const Position = require('../models/positions')
 const fs = require('fs');
 const tinity = require('./tinify')
 let multer = require('multer');
@@ -197,6 +198,7 @@ router.post('/users/:id',async(req,res)=>{
     const result = await User.findByIdAndDelete(id)
     res.redirect('/users')
 })
+
 /*
 router.get('/rusers/:id',async(req,res)=>{
 
@@ -215,8 +217,90 @@ router.get('/rusers/:id',async(req,res)=>{
     
 })
 */
+router.get('/new',async(req,res)=>{
+    await Position.insertMany([
+        {
+            id:1,
+            name:'Security' 
+         },
+        {
+            id:2,
+            name:'Designer' 
+         },
+        {
+           id:3,
+           name:'Content manager' 
+        },
+        {
+            id:4,
+            name:'Lawyer' 
+         },
+         {
+            id:5,
+            name:'Producer' 
+         },
+         {
+            id:6,
+            name:'Gamer' 
+         },
+         {
+            id:7,
+            name:'Youtuber' 
+         },
+         {
+            id:8,
+            name:'Farmer' 
+         },
+         {
+            id:9,
+            name:'Killer' 
+         },
+         {
+            id:10,
+            name:'Musician' 
+         },
+         {
+            id:11,
+            name:'Artist' 
+         },
+         {
+            id:12,
+            name:'Singer' 
+         },
+         {
+            id:14,
+            name:'Accountant' 
+         },
+         {
+            id:15,
+            name:'Businessman' 
+         },
+         {
+            id:16,
+            name:'Dancer' 
+         },
+         {
+            id:17,
+            name:'Teacher' 
+         },
+         {
+            id:18,
+            name:'Scientist' 
+         },
+         {
+            id:19,
+            name:'Driver' 
+         },
+         {
+            id:20,
+            name:'Data scientist' 
+         },
+    ])
+})
+
 router.get('/positions',async(req,res)=>{
-    const positions = { 1: {id:1,name:'Security'}, 2: {id:2,name:'Designer'}, 3: {id:3,name:'Content manager'}, 4: {id:4,name:'Lawyer'} }
+   // const positions = { 1: {id:1,name:'Security'}, 2: {id:2,name:'Designer'}, 3: {id:3,name:'Content manager'}, 4: {id:4,name:'Lawyer'} }
+    const positions = await Position.find()
     const foundUser = await User.find()
     let array = []
     let result = []
@@ -226,10 +310,10 @@ router.get('/positions',async(req,res)=>{
     let uniqueArray = [...new Set(array)]
     for(let position of uniqueArray){
         try{       
-            if(position == positions[position].id){
+            if(position == positions[position-1].id){
                 result.push({
-                    id:positions[position].id,
-                    name:positions[position].name
+                    id:positions[position-1].id,
+                    name:positions[position-1].name
                 })
             }
         }catch(e){ }     
