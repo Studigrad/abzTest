@@ -309,15 +309,18 @@ router.get('/positions',async(req,res)=>{
     }
     let uniqueArray = [...new Set(array)]
     for(let position of uniqueArray){
-        try{       
-            if(position == positions[position-1].id){
-                result.push({
-                    id:positions[position-1].id,
-                    name:positions[position-1].name
-                })
-            }
-        }catch(e){ }     
+          for(pos of positions){
+            try{       
+                if(position == pos.id){
+                    result.push({
+                        id:pos.id,
+                        name:pos.name
+                    })
+                }
+            }catch(e){ } 
+          }
     }
+    
     if(result){
         return res.json({
             "success" : true,
@@ -328,8 +331,7 @@ router.get('/positions',async(req,res)=>{
             "success" : false,
             "positions" : 'Positions not found'
           })
-    }
-    
+    }  
 })
 
 
