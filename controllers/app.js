@@ -150,13 +150,13 @@ router.post('/users',upload.single('photo'),async(req,res)=>{
         }catch(e){
             
             if(e.code!=11000){
-                con.destroy();
+               
                 return res.status(400).json({
                     "success": false,
                     "message": e.message
                   })
             }else{
-                con.destroy();
+                
                 return res.status(400).json({
                     "success": false,
                     "message": "User with this phone ,name or email already exist"
@@ -164,7 +164,7 @@ router.post('/users',upload.single('photo'),async(req,res)=>{
             }
             
         }
-        con.destroy();
+        
         return   res.json({
             "success" : true,
             "user_id" : newUser._id,
@@ -172,7 +172,7 @@ router.post('/users',upload.single('photo'),async(req,res)=>{
         })
         
     }else{
-        con.destroy();
+       
         return  res.status(400).json({
             "success": false,
             "message": "The token expired."
