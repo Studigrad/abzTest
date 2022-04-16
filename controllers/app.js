@@ -1,5 +1,4 @@
 const express = require('express');
-const ejsMate = require('ejs-mate');
 const methodOverride = require('method-override');
 const session = require('express-session'); 
 const path = require('path');
@@ -8,9 +7,14 @@ const Position = require('../models/positions')
 const fs = require('fs');
 const tinity = require('./tinify')
 let multer = require('multer');
+const mysql = require('mysql');
+const con = require('../mysql/database')
+  
 
 
-//const client = redis.createClient()
+const uploadController = require("../controllers/upload");
+const upload = require("../middlewares/upload");
+
 
 const port = process.env.PORT ?? 8050
 router = express();
@@ -18,21 +22,10 @@ router.set('view engine', 'ejs');
 router.set('views', path.join(__dirname,'..','views'))
 router.use(express.urlencoded({ extended: true }));
 router.use(methodOverride('_method'));
-router.use(express.static(path.join(__dirname, '..','public')))
+router.use(express.static(path.join(__dirname, '..','uploads')))
 router.use(express.json());
 router.use(session({ secret: 'secret' }))
 
-
-// set up multer for storing uploaded files
-var storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads')
-    },
-    filename: (req, file, cb) => {
-        cb(null, file.originalname)
-    }
-});
-var upload = multer({ storage: storage });
 
 
 function MakePage(foundUser,page){
@@ -44,10 +37,10 @@ function MakePage(foundUser,page){
     return result;
 }
 
+
 router.get('/',(req,res)=>{
     console.log(req.session)
      res.redirect('/users')
-    //res.end('<h1>Hello World</h1>')
 })
 
 router.get('/token',(req,res)=>{
@@ -67,17 +60,23 @@ router.get('/token',(req,res)=>{
 
 router.get('/users',async(req,res)=>{
     let link = process.env.URL || `http://localhost:${port}/users?page=`
-
+    let arr = []
+    con.query(`SELECT * from users`,function(err,result){
+        arr = JSON.parse(JSON.stringify(result))
+        if(err) return res.json({error:err});
+        
+    })
     const foundUser = await User.find();
-    
+
     let page = req.query.page || 1
     const offset = req.query.offset || 1
     const count = req.query.count || 5
     let prev = null
     let next = 2
 
-    const result = MakePage(foundUser,count)
-
+    const result = MakePage(arr,count)
+    console.log('result len is ',result.length)
+    console.log('page is ',page)
     if(page>result.length){
         return res.status(404).json({
             error:'You are out of pages'
@@ -93,7 +92,7 @@ router.get('/users',async(req,res)=>{
         success: true,
         page: page,
         total_pages: result.length,
-        total_users: foundUser.length,
+        total_users: arr.length,
         count: count,
         links: 
         {
@@ -112,8 +111,8 @@ router.get('/users',async(req,res)=>{
 
 })
 
-router.post('/users',upload.single('photo'),async(req,res,next)=>{   
-
+router.post('/users',upload.single('photo'),async(req,res)=>{  
+  
     const token = req.headers.token || req.session.id
     const {name,email,phone,position_id,photo} = req.body
     let buf = ''
@@ -125,6 +124,7 @@ router.post('/users',upload.single('photo'),async(req,res,next)=>{
             "message": "Photo is required"
           })
     }
+    
     
     if(token==req.session.id){        
         const newUser = new User({
@@ -141,15 +141,22 @@ router.post('/users',upload.single('photo'),async(req,res,next)=>{
 
         try{
             const result = await newUser.save()
+            var sql = `INSERT INTO users (name, email,phone,position_id,image_name) VALUES ('${name}','${email}','${phone}','${position_id}','${req.file.filename}')`;
+            con.query(sql, function (err, result) {
+                if (err) return res.json({error:err});
+                console.log('User inserted')
+            })
+            res.redirect('/users')
         }catch(e){
             
             if(e.code!=11000){
-                
+                con.destroy();
                 return res.status(400).json({
                     "success": false,
                     "message": e.message
                   })
             }else{
+                con.destroy();
                 return res.status(400).json({
                     "success": false,
                     "message": "User with this phone ,name or email already exist"
@@ -157,7 +164,7 @@ router.post('/users',upload.single('photo'),async(req,res,next)=>{
             }
             
         }
-        
+        con.destroy();
         return   res.json({
             "success" : true,
             "user_id" : newUser._id,
@@ -165,24 +172,31 @@ router.post('/users',upload.single('photo'),async(req,res,next)=>{
         })
         
     }else{
+        con.destroy();
         return  res.status(400).json({
             "success": false,
             "message": "The token expired."
         })
     }
-
+    
 })
 
 router.get('/users/:id',async(req,res)=>{
 
     const {id} = req.params
-      
-    const foundUser = User.findById(id).then(function(user){
+    
+    con.query(`SELECT * FROM users WHERE id = '${id}'`, function (err, result) {
+        if(err) return res.json({error:err})
+        let foundUser  = JSON.parse(JSON.stringify(result))
+        console.log(foundUser)
         if(req.header('Accept').includes('application/json')){
-            return res.json({success : true,user:user})
+            return res.json({success : true,user:foundUser[0]})
         } else{
-            return res.render('user',{user})
-        }
+            return res.render('user',{user:foundUser[0]})
+        }  
+    })
+    /*
+    const foundUser = User.findById(id).then(function(user){
         
     }).catch(function(e){
         return res.status(404).json({"success": false,
@@ -191,147 +205,136 @@ router.get('/users/:id',async(req,res)=>{
           "user_id" : e.message
         }})
     })
-    
+    */
 })
 router.post('/users/:id',async(req,res)=>{
     const {id} = req.params
-    const result = await User.findByIdAndDelete(id)
+    var sql = `DELETE FROM users WHERE id = '${id}'`;
+    con.query(sql, function (err, result) {
+      if (err) return res.json({error:err});
+      console.log("Number of records deleted: " + result.affectedRows);
+    });
+    //const result = await User.findByIdAndDelete(id)
     res.redirect('/users')
 })
 
-/*
-router.get('/rusers/:id',async(req,res)=>{
 
-    const {id} = req.params
-
-    const foundUser = User.findById(id).then(function(user){
-        return res.end(`<img src="data:image/${user.photo.contentType};base64,
-        ${user.photo.data.toString('base64')}">`)
-    }).catch(function(e){
-        return res.status(404).json({"success": false,
-        "message": "The user with the requested identifier does not exist",
-        "fails": {
-          "user_id" : e.message
-        }})
-    })
-    
-})
-*/
 router.get('/new',async(req,res)=>{
-    await Position.insertMany([
-        {
-            id:1,
-            name:'Security' 
-         },
-        {
-            id:2,
-            name:'Designer' 
-         },
-        {
-           id:3,
-           name:'Content manager' 
-        },
-        {
-            id:4,
-            name:'Lawyer' 
-         },
-         {
-            id:5,
-            name:'Producer' 
-         },
-         {
-            id:6,
-            name:'Gamer' 
-         },
-         {
-            id:7,
-            name:'Youtuber' 
-         },
-         {
-            id:8,
-            name:'Farmer' 
-         },
-         {
-            id:9,
-            name:'Killer' 
-         },
-         {
-            id:10,
-            name:'Musician' 
-         },
-         {
-            id:11,
-            name:'Artist' 
-         },
-         {
-            id:12,
-            name:'Singer' 
-         },
-         {
-            id:14,
-            name:'Accountant' 
-         },
-         {
-            id:15,
-            name:'Businessman' 
-         },
-         {
-            id:16,
-            name:'Dancer' 
-         },
-         {
-            id:17,
-            name:'Teacher' 
-         },
-         {
-            id:18,
-            name:'Scientist' 
-         },
-         {
-            id:19,
-            name:'Driver' 
-         },
-         {
-            id:20,
-            name:'Data scientist' 
-         },
-    ])
+    
+    var sql = "INSERT INTO positions (name, position_id) VALUES ?";
+    var values = [
+        [
+            'Security','1'
+
+        ],
+        [
+            'Designer','2'
+        ],
+        [
+          'Content manager','3'
+        ],
+        [
+           'Lawyer','4' 
+        ],
+         [
+            'Producer','5'
+         ],
+         [
+            'Gamer','6'
+        
+         ],
+         [
+            'Youtuber','7'
+         ],
+         [
+            'Farmer','8'
+         ],
+         [
+           'Killer','9'
+         ],
+         [
+           'Musician','10'
+         ],
+         [
+            'Artist','11'
+         ],
+         [
+            'Singer','12'
+         ],
+         [
+            'Accountant','13'
+         ],
+         [
+            'Businessman','14'
+         ],
+         [
+            'Dancer','15' 
+         ],
+         [
+            'Teacher','16'
+         ],
+         [
+            'Scientist','17' 
+         ],
+         [
+            'Driver','18'
+         ],
+         [
+            'Data scientist','19' 
+         ],
+    ]
+    con.query(sql, [values], function (err, result) {
+        if (err)  res.json({error:err});
+        console.log("Number of records inserted: " + result.affectedRows);
+      });
 })
 
 router.get('/positions',async(req,res)=>{
-   // const positions = { 1: {id:1,name:'Security'}, 2: {id:2,name:'Designer'}, 3: {id:3,name:'Content manager'}, 4: {id:4,name:'Lawyer'} }
-    const positions = await Position.find()
-    const foundUser = await User.find()
-    let array = []
-    let result = []
-    for(let position of foundUser){
-        array.push(position.position_id)
-    }
-    let uniqueArray = [...new Set(array)]
-    for(let position of uniqueArray){
-          for(pos of positions){
-            try{       
-                if(position == pos.id){
-                    result.push({
-                        id:pos.id,
-                        name:pos.name
-                    })
+    con.query(`SELECT * from users`,function(err,foundUser){
+        if(err) return res.json({error:err});
+       
+        con.query(`SELECT * from positions`,function(err,positions){
+            if(err) return res.json({error:err});
+            
+            let array = []
+            let result = []
+            for(let position of foundUser){
+                array.push(position.position_id)
+            }
+            console.log(array)
+            let uniqueArray = [...new Set(array)]
+            for(let position of uniqueArray){
+                for(pos of positions){
+                    try{       
+                        if(position == pos.position_id){
+                            result.push({
+                                id:pos.position_id,
+                                name:pos.name
+                            })
+                        }
+                    }catch(e){ } 
                 }
-            }catch(e){ } 
-          }
-    }
+            }
+            
+            if(result){
+                return res.json({
+                    "success" : true,
+                    "positions" : result
+                })
+            }else{
+                return res.json({
+                    "success" : false,
+                    "positions" : 'Positions not found'
+                })
+            }  
+
+        })
+    })
     
-    if(result){
-        return res.json({
-            "success" : true,
-            "positions" : result
-          })
-    }else{
-        return res.json({
-            "success" : false,
-            "positions" : 'Positions not found'
-          })
-    }  
+    
+   
+
+    
 })
 
 

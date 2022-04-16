@@ -58,15 +58,10 @@
         <a href=<%= response.links.next_url %> class="btn btn-primary">Next Page</a>
         <% for(let user of response.users){ %>
         <div class="card mx-auto " style="width: 18rem;">
-            <% if(user.photo.data){ %> 
-                <img src="data:image/<%= user.photo.contentType %>;base64,
-                <%=user.photo.data.toString('base64')%>">
-                <% } else{%>
-                    <img src=<%= user.photo %>  alt="">
-                    <% } %>  
+            <img src="<%= user.image_name %> " alt="">
             <div class="card-body">
               <h5 class="card-title">Info</h5>
-              <a href="users/<%= user._id %>">ID: <%= user._id %> </a>
+              <a href="users/<%= user.id %>">ID: <%= user.id %> </a>
               <div>
                 <label for="name">Name</label>
                 <input type="text" id="name" placeholder=<%= user.name %> 

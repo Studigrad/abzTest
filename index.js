@@ -5,6 +5,8 @@ const router = require('./controllers/app')
 
 app = express();
 
+
+
 db();
 
 const port = process.env.PORT ?? 8050

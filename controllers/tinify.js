@@ -18,12 +18,12 @@ tinify.key = "r2ZvMMvvRdGPPLrhkHKp2Mvx0SbqSszt";
             width: 70,
             height: 70
           });
-         const res =  await resized.toFile(path.join(__dirname,'..','uploads',arrayOfStrings[0]+'.jpeg'))
+         const res =  await resized.toFile(path.join(__dirname,'..','uploads',name))
        
          if(res){
-           return arrayOfStrings[0]+'.jpeg'
+           return name
        }
-        return arrayOfStrings[0]+'.jpeg'   
+        return name   
       
     /*
     fs.readFile(file, function(err, sourceData) {

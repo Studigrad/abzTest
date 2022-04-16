@@ -14,12 +14,8 @@
     <hr>
     <div>
         <div class="card mx-auto" style="width: 18rem;">
-            <% if(user.photo.data){ %> 
-                <img src="data:image/<%= user.photo.contentType %>;base64,
-                <%=user.photo.data.toString('base64')%>">
-                <% } else{%>
-                    <img src=<%= user.photo %>  alt="">
-                    <% } %>  
+            <img src='<%= user.image_name %>' alt="<%= user.image_name %>">
+           
             <div class="card-body">
               <h5 class="card-title">Card title</h5>
               <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
@@ -43,7 +39,7 @@
                 <input type="text" id="position_id" placeholder=<%= user.position_id %>  
                        value="" name="position_id" required>
             </div>
-            <form class="card mx-auto mt-3" action="/users/<%= user._id %>" method="POST">
+            <form class="card mx-auto mt-3" action="/users/<%= user.id %>" method="POST">
                 <button class="btn btn-danger">DELETE</button>
               </form>
             </div>
