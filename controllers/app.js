@@ -142,9 +142,10 @@ router.post('/users',upload.single('photo'),async(req,res)=>{
         try{
             const result = await newUser.save()
             var sql = `INSERT INTO users (name, email,phone,position_id,image_name) VALUES ('${name}','${email}','${phone}','${position_id}','${req.file.filename}')`;
-            con.query(sql, function (err, result) {
+            con.query(sql, async function (err, result) {
                 if (err) return res.json({'error':err});
                 console.log('User inserted')
+                const deleted = await User.findByIdAndDelete(newUser._id)
                return res.json({'success':true,'message':result})
             })
             
