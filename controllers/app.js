@@ -166,11 +166,6 @@ router.post('/users',upload.single('photo'),async(req,res)=>{
             
         }
         
-        return   res.json({
-            "success" : true,
-            "user_id" : newUser._id,
-            "message" : "New user successfully registered"
-        })
         
     }else{
        
