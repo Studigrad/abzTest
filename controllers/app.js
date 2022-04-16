@@ -143,10 +143,11 @@ router.post('/users',upload.single('photo'),async(req,res)=>{
             const result = await newUser.save()
             var sql = `INSERT INTO users (name, email,phone,position_id,image_name) VALUES ('${name}','${email}','${phone}','${position_id}','${req.file.filename}')`;
             con.query(sql, function (err, result) {
-                if (err) return res.json({error:err});
+                if (err) return res.json({'error':err});
                 console.log('User inserted')
+               return res.json({'success':true,'message':result})
             })
-            res.redirect('/users')
+            
         }catch(e){
             
             if(e.code!=11000){
@@ -211,7 +212,7 @@ router.post('/users/:id',async(req,res)=>{
     const {id} = req.params
     var sql = `DELETE FROM users WHERE id = '${id}'`;
     con.query(sql, function (err, result) {
-      if (err) return res.json({error:err});
+      if (err) return res.json({'error':err});
       console.log("Number of records deleted: " + result.affectedRows);
     });
     //const result = await User.findByIdAndDelete(id)
@@ -291,10 +292,10 @@ router.get('/new',async(req,res)=>{
 
 router.get('/positions',async(req,res)=>{
     con.query(`SELECT * from users`,function(err,foundUser){
-        if(err) return res.json({error:err});
+        if(err) return res.json({'error':err});
        
         con.query(`SELECT * from positions`,function(err,positions){
-            if(err) return res.json({error:err});
+            if(err) return res.json({'error':err});
             
             let array = []
             let result = []
